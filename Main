@@ -1,0 +1,56 @@
+import streamlit as st
+import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import LabelEncoder
+import numpy as np
+
+# Load data
+train_df = pd.read_csv('Training.csv')
+test_df = pd.read_csv('Testing.csv')
+
+# Features and target
+X = train_df.drop(['prognosis'], axis=1)
+y = train_df['prognosis']
+
+# Encode target
+le = LabelEncoder()
+y_encoded = le.fit_transform(y)
+
+# Train model
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X, y_encoded)
+
+# Get all symptoms from the dataset (column names)
+all_symptoms = X.columns.tolist()
+
+st.title("Disease Prediction Using Machine Learning")
+
+st.text_input("Name of the Patient: ")
+# Step 1: Load symptoms from the Training.csv file
+symptom_list = ['None'] + train_df.drop('prognosis', axis=1).columns.tolist()
+
+# Step 2: Use the list directly in selectboxes
+s1selected = st.selectbox("Symptom 1", symptom_list)
+s2selected = st.selectbox("Symptom 2", symptom_list)
+s3selected = st.selectbox("Symptom 3", symptom_list)
+s4selected = st.selectbox("Symptom 4", symptom_list)
+s5selected = st.selectbox("Symptom 5", symptom_list)
+
+clicked = st.button("Random Forest")
+
+if clicked:
+    # Create a binary input vector for symptoms
+    input_vector = [0] * len(all_symptoms)
+    selected_symptoms = [s1selected, s2selected, s3selected, s4selected, s5selected]
+
+    for symptom in selected_symptoms:
+        if symptom != "select" and symptom in all_symptoms:
+            index = all_symptoms.index(symptom)
+            input_vector[index] = 1
+
+    # Predict the disease
+    prediction = model.predict([input_vector])
+    predicted_disease = le.inverse_transform(prediction)[0]
+
+    st.subheader("Predicted Disease:")
+    st.success(predicted_disease)
